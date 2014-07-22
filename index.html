@@ -1,0 +1,130 @@
+<!DOCTYPE html >
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
+<title>image drop</title>
+<style>
+#dragbox{
+  border:5px dashed #ccc;
+  height:100px;
+  line-height:100px; 
+  width:100px;
+  text-align:center;
+}
+#div1 {width:350px;height:70px;padding:10px;border:1px solid #aaaaaa;}
+</style>
+</head>
+
+<body>
+
+
+<form>  
+<p> <input id="myfile" name="myfile" type="file"   multiple="true" accept="image/*" /></p>
+</form>
+<div id="dragbox">圖片拖曳</div>
+
+<div id="content"></div>
+
+<script>
+
+
+window.onload = function () {
+    document.getElementById('myfile').onchange = readFile;
+    var box = document.getElementById('dragbox')
+    box.addEventListener('drop',dropFile,false);
+    box.addEventListener('dragover',dragover,false);
+
+  
+};
+
+function dragenter(e){
+    e = e || window.event;
+    e.preventDefault();
+}
+
+function dragleave(e){
+    e = e || window.event;
+    e.preventDefault();
+}
+
+function dragover(e){
+    e = e || window.event;
+    e.preventDefault();
+}
+
+function dropFile(e){
+      e = e || window.event;
+      e.preventDefault();
+      readFile(e, e.dataTransfer.files);
+}
+function readFile(e, files) {
+    files = files || this.files;
+    for(var i=0;i<files.length;i++){
+        var file=files[i];
+        showimage(file);
+        uploadfile(file,'upload.php',progress , oncomplete);
+    }
+    
+}
+
+function progress(e){
+    var percent = ((e.loaded / e.total) * 100).toFixed() + "%";
+    var kb=(parseInt(e.loaded / 1024)).toFixed(0)+' KB';
+    console.log('progress '+percent+' / '+kb);
+}
+
+function oncomplete(result){
+    console.log('oncomplete '+result);
+}
+
+function showimage(file){
+    var fReader = new FileReader();
+    fReader.onload = function (e) {
+        e = e || window.event;
+        
+        var img = document.createElement('img');
+        img.src=e.target.result;
+        img.style.width='100px';
+        
+        var div = document.createElement('div');
+        div.appendChild(img);
+        
+        document.getElementById('content').appendChild(div);
+    };
+    fReader.readAsDataURL(file);
+}
+
+var uploadfile = function(file,url,progress,oncomplete){
+    var xhr = new XMLHttpRequest();
+    xhr.open('post',url,true);
+    
+    // 上傳 讀取條
+    if(typeof progress === 'function') {
+        xhr.upload.addEventListener('progress',progress,false);
+    }
+    
+    xhr.onreadystatechange = function(e){
+        if(xhr.readyState === 4){
+            if(xhr.status === 200){
+                if(typeof oncomplete === 'function') oncomplete(xhr.responseText);
+            }
+        }
+    }
+    
+     // Set headers
+    //xhr.setRequestHeader("Content-Type", "multipart/form-data");
+    xhr.setRequestHeader("Content-Type", file.type);
+    xhr.setRequestHeader("X-File-Name", encodeURIComponent(file.name));
+    xhr.setRequestHeader("X-File-Size", file.size);
+    xhr.setRequestHeader("X-File-Type", file.type);
+    
+    xhr.send(file);
+    
+}
+
+</script>
+
+</body>
+</html>
+
